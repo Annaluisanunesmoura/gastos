@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Controle de Gastos</title>
+    <title>Controle de Gastos Pessoais</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -12,38 +12,40 @@
     <div class="container">
         <header>
             <h1><i class="fas fa-wallet"></i> Controle de Gastos</h1>
-            <p>Gerencie suas despesas de forma simples e eficiente</p>
+            <p>Gerencie suas despesas de forma simples</p>
         </header>
 
         <div class="app-container">
+            <!-- Seção de Adicionar Gastos -->
             <section class="add-expense">
-                <h2>Adicionar Nova Despesa</h2>
+                <h2><i class="fas fa-plus-circle"></i> Nova Despesa</h2>
                 <form id="expense-form">
                     <div class="form-group">
-                        <label for="category">Categoria:</label>
+                        <label for="category"><i class="fas fa-tag"></i> Categoria:</label>
                         <input type="text" id="category" list="categories" required placeholder="Ex: Alimentação">
-                        <datalist id="categories">
-                            <!-- Categorias serão preenchidas dinamicamente -->
-                        </datalist>
+                        <datalist id="categories"></datalist>
                     </div>
                     <div class="form-group">
-                        <label for="description">Descrição (opcional):</label>
-                        <input type="text" id="description" placeholder="Ex: Sorvete no shopping">
+                        <label for="description"><i class="fas fa-align-left"></i> Descrição:</label>
+                        <input type="text" id="description" placeholder="Ex: Supermercado">
                     </div>
                     <div class="form-group">
-                        <label for="amount">Valor (R$):</label>
+                        <label for="amount"><i class="fas fa-money-bill-wave"></i> Valor (R$):</label>
                         <input type="number" id="amount" step="0.01" min="0" required placeholder="0,00">
                     </div>
                     <div class="form-group">
-                        <label for="date">Data:</label>
+                        <label for="date"><i class="fas fa-calendar-day"></i> Data:</label>
                         <input type="date" id="date" required>
                     </div>
-                    <button type="submit" class="btn">Adicionar Despesa <i class="fas fa-plus-circle"></i></button>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
                 </form>
             </section>
 
+            <!-- Seção de Resumo -->
             <section class="expense-summary">
-                <h2>Resumo Financeiro</h2>
+                <h2><i class="fas fa-chart-pie"></i> Resumo</h2>
                 <div class="summary-cards">
                     <div class="card">
                         <h3>Total no Mês</h3>
@@ -56,33 +58,32 @@
                 </div>
                 <div class="filter-controls">
                     <div class="form-group">
-                        <label for="filter-month">Filtrar por Mês:</label>
-                        <select id="filter-month">
-                            <!-- Meses serão preenchidos dinamicamente -->
-                        </select>
+                        <label for="filter-month"><i class="fas fa-filter"></i> Mês:</label>
+                        <select id="filter-month"></select>
                     </div>
                     <div class="form-group">
-                        <label for="filter-category">Filtrar por Categoria:</label>
+                        <label for="filter-category"><i class="fas fa-filter"></i> Categoria:</label>
                         <select id="filter-category">
-                            <option value="all">Todas as Categorias</option>
-                            <!-- Categorias serão preenchidas dinamicamente -->
+                            <option value="all">Todas</option>
                         </select>
                     </div>
                 </div>
             </section>
 
+            <!-- Lista de Gastos -->
             <section class="expense-list">
-                <h2>Histórico de Gastos</h2>
+                <h2><i class="fas fa-history"></i> Histórico</h2>
                 <div class="list-header">
-                    <span class="header-item">Data</span>
-                    <span class="header-item">Categoria</span>
-                    <span class="header-item">Descrição</span>
-                    <span class="header-item">Valor</span>
-                    <span class="header-item">Ações</span>
+                    <span>Data</span>
+                    <span>Categoria</span>
+                    <span>Descrição</span>
+                    <span>Valor</span>
+                    <span>Ações</span>
                 </div>
                 <div id="expenses-container">
-                    <!-- Despesas serão listadas aqui -->
-                    <p class="empty-message">Nenhuma despesa cadastrada ainda.</p>
+                    <p class="empty-message">
+                        <i class="fas fa-info-circle"></i> Nenhuma despesa registrada.
+                    </p>
                 </div>
             </section>
         </div>
