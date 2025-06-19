@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Controle de Gastos</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-wallet"></i> Controle de Gastos</h1>
+            <p>Gerencie suas despesas de forma simples e eficiente</p>
+        </header>
+
+        <div class="app-container">
+            <section class="add-expense">
+                <h2>Adicionar Nova Despesa</h2>
+                <form id="expense-form">
+                    <div class="form-group">
+                        <label for="category">Categoria:</label>
+                        <input type="text" id="category" list="categories" required placeholder="Ex: Alimentação">
+                        <datalist id="categories">
+                            <!-- Categorias serão preenchidas dinamicamente -->
+                        </datalist>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Descrição (opcional):</label>
+                        <input type="text" id="description" placeholder="Ex: Sorvete no shopping">
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Valor (R$):</label>
+                        <input type="number" id="amount" step="0.01" min="0" required placeholder="0,00">
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Data:</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    <button type="submit" class="btn">Adicionar Despesa <i class="fas fa-plus-circle"></i></button>
+                </form>
+            </section>
+
+            <section class="expense-summary">
+                <h2>Resumo Financeiro</h2>
+                <div class="summary-cards">
+                    <div class="card">
+                        <h3>Total no Mês</h3>
+                        <p id="month-total">R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Categoria Mais Gasta</h3>
+                        <p id="top-category">-</p>
+                    </div>
+                </div>
+                <div class="filter-controls">
+                    <div class="form-group">
+                        <label for="filter-month">Filtrar por Mês:</label>
+                        <select id="filter-month">
+                            <!-- Meses serão preenchidos dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-category">Filtrar por Categoria:</label>
+                        <select id="filter-category">
+                            <option value="all">Todas as Categorias</option>
+                            <!-- Categorias serão preenchidas dinamicamente -->
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <section class="expense-list">
+                <h2>Histórico de Gastos</h2>
+                <div class="list-header">
+                    <span class="header-item">Data</span>
+                    <span class="header-item">Categoria</span>
+                    <span class="header-item">Descrição</span>
+                    <span class="header-item">Valor</span>
+                    <span class="header-item">Ações</span>
+                </div>
+                <div id="expenses-container">
+                    <!-- Despesas serão listadas aqui -->
+                    <p class="empty-message">Nenhuma despesa cadastrada ainda.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
