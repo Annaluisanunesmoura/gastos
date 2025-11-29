@@ -1,312 +1,99 @@
-// Configuração do Supabase - COLE SUAS CONFIGURAÇÕES AQUI
-// Configuração do Supabase - SUBSTITUA COM SUAS CONFIGURAÇÕES
-const SUPABASE_URL = 'https://punthiypqvdopkqbluic.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bnRoaXlwcXZkb3BrcWJsdWljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNzk0NTEsImV4cCI6MjA3OTk1NTQ1MX0.bwlMwNZnolfaRMeWDi6uQ08sUBH1UyhoJbhkAz7oXpA';
-console.log('Iniciando Supabase com URL:', SUPABASE_URL);
+// Sistema de Notificações Bonitas
+class Notificacao {
+    static mostrar(mensagem, tipo = 'sucesso') {
+        this.remover();
+        
+        const notificacao = document.createElement('div');
+        notificacao.className = `notificacao ${tipo}`;
+        notificacao.id = 'notificacao';
+        
+        const icone = tipo === 'sucesso' ? '✅' : '❌';
+        const titulo = tipo === 'sucesso' ? 'Sucesso!' : 'Erro!';
+        
+        notificacao.innerHTML = `
+            <div class="notificacao-conteudo">
+                <div class="notificacao-icon">${icone}</div>
+                <div class="notificacao-texto">
+                    <h4>${titulo}</h4>
+                    <p>${mensagem}</p>
+                </div>
+                <button class="notificacao-fechar" onclick="Notificacao.remover()">×</button>
+            </div>
+        `;
+        
+        document.body.appendChild(notificacao);
+        
+        setTimeout(() => {
+            notificacao.classList.add('mostrar');
+        }, 100);
+        
+        setTimeout(() => {
+            this.remover();
+        }, 5000);
+    }
+    
+    static remover() {
+        const notificacao = document.getElementById('notificacao');
+        if (notificacao) {
+            notificacao.classList.remove('mostrar');
+            setTimeout(() => {
+                if (notificacao.parentNode) {
+                    notificacao.parentNode.removeChild(notificacao);
+                }
+            }, 400);
+        }
+    }
+}
 
-// Inicializar Supabase
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-class ControleGastosSupabase {
+class ControleGastos {
     constructor() {
-        this.transacoes = [];
+        this.transacoes = this.carregarTransacoes();
         this.competenciaAtual = this.obterCompetenciaAtual();
-        this.user = null;
-        console.log('Classe inicializada');
+        this.anoAtual = new Date().getFullYear();
         this.init();
     }
 
-    async init() {
-        console.log('Iniciando app...');
-        this.configurarEventosAuth();
-        
-        // Verificar sessão existente
-        try {
-            const { data: { session }, error } = await supabase.auth.getSession();
-            console.log('Sessão encontrada:', session);
-            
-            if (session) {
-                this.user = session.user;
-                this.mostrarApp();
-                await this.carregarDadosUsuario();
-            } else {
-                this.mostrarLogin();
-            }
-        } catch (error) {
-            console.error('Erro ao verificar sessão:', error);
-            this.mostrarLogin();
-        }
-
-        // Escutar mudanças de auth
-        supabase.auth.onAuthStateChange((event, session) => {
-            console.log('Auth state changed:', event, session);
-            
-            if (event === 'SIGNED_IN' && session) {
-                this.user = session.user;
-                this.mostrarApp();
-                this.carregarDadosUsuario();
-            } else if (event === 'SIGNED_OUT') {
-                this.user = null;
-                this.mostrarLogin();
-            }
-        });
+    init() {
+        this.carregarCompetencias();
+        this.configurarEventos();
+        this.atualizarDashboard();
+        this.carregarFiltros();
     }
 
-    configurarEventosAuth() {
-        console.log('Configurando eventos auth...');
-        
-        // Login
-        document.getElementById('btnEntrar').addEventListener('click', () => {
-            console.log('Botão entrar clicado');
-            this.fazerLogin();
-        });
-
-        // Criar conta
-        document.getElementById('btnCriarConta').addEventListener('click', () => {
-            console.log('Botão criar conta clicado');
-            this.criarConta();
-        });
-
-        // Sair
-        document.getElementById('btnSair').addEventListener('click', () => {
-            console.log('Botão sair clicado');
-            this.fazerLogout();
-        });
-
-        console.log('Eventos auth configurados');
-    }
-
-    async fazerLogin() {
-        console.log('Tentando login...');
-        const email = document.getElementById('loginEmail').value;
-        const senha = document.getElementById('loginSenha').value;
-
-        console.log('Email:', email, 'Senha:', senha ? '***' : 'vazia');
-
-        if (!email || !senha) {
-            this.mostrarMensagem('Preencha email e senha', 'error');
-            return;
-        }
-
-        try {
-            this.mostrarMensagem('Fazendo login...', 'success');
-            
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: email,
-                password: senha
-            });
-
-            console.log('Resposta login:', { data, error });
-
-            if (error) {
-                console.error('Erro no login:', error);
-                throw error;
-            }
-            
-            this.mostrarMensagem('Login realizado!', 'success');
-        } catch (error) {
-            console.error('Erro completo no login:', error);
-            this.mostrarMensagem(this.traduzirErroSupabase(error), 'error');
-        }
-    }
-
-    async criarConta() {
-        console.log('Tentando criar conta...');
-        const email = document.getElementById('loginEmail').value;
-        const senha = document.getElementById('loginSenha').value;
-
-        if (!email || !senha) {
-            this.mostrarMensagem('Preencha email e senha', 'error');
-            return;
-        }
-
-        if (senha.length < 6) {
-            this.mostrarMensagem('A senha deve ter pelo menos 6 caracteres', 'error');
-            return;
-        }
-
-        try {
-            this.mostrarMensagem('Criando conta...', 'success');
-            
-            const { data, error } = await supabase.auth.signUp({
-                email: email,
-                password: senha
-            });
-
-            console.log('Resposta criar conta:', { data, error });
-
-            if (error) throw error;
-            
-            if (data.user && data.session) {
-                this.mostrarMensagem('Conta criada com sucesso! Fazendo login...', 'success');
-            } else {
-                this.mostrarMensagem('Conta criada! Verifique seu email para confirmar.', 'success');
-            }
-        } catch (error) {
-            console.error('Erro completo ao criar conta:', error);
-            this.mostrarMensagem(this.traduzirErroSupabase(error), 'error');
-        }
-    }
-
-    async fazerLogout() {
-        try {
-            console.log('Fazendo logout...');
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
-            console.log('Logout realizado');
-        } catch (error) {
-            console.error('Erro no logout:', error);
-        }
-    }
-
-    traduzirErroSupabase(error) {
-        console.log('Traduzindo erro:', error);
-        
-        const erros = {
-            'Invalid login credentials': 'Email ou senha incorretos',
-            'Email not confirmed': 'Confirme seu email antes de fazer login',
-            'Password should be at least 6 characters': 'A senha deve ter pelo menos 6 caracteres',
-            'User already registered': 'Este email já está em uso',
-            'Invalid email': 'Email inválido'
-        };
-        
-        return erros[error.message] || error.message || 'Erro desconhecido';
-    }
-
-    mostrarMensagem(texto, tipo) {
-        console.log(`Mensagem [${tipo}]:`, texto);
-        const message = document.getElementById('loginMessage');
-        message.textContent = texto;
-        message.className = `login-message ${tipo}`;
-        
-        setTimeout(() => {
-            message.textContent = '';
-            message.className = 'login-message';
-        }, 5000);
-    }
-
-    mostrarLogin() {
-        console.log('Mostrando tela de login');
-        document.getElementById('telaLogin').style.display = 'flex';
-        document.getElementById('appPrincipal').style.display = 'none';
-    }
-
-    mostrarApp() {
-        console.log('Mostrando app principal');
-        document.getElementById('telaLogin').style.display = 'none';
-        document.getElementById('appPrincipal').style.display = 'block';
-        if (this.user) {
-            document.getElementById('userEmail').textContent = this.user.email;
-        }
-    }
-
-    async carregarDadosUsuario() {
-        if (!this.user) {
-            console.log('Sem usuário para carregar dados');
-            return;
-        }
-
-        console.log('Carregando dados do usuário:', this.user.id);
-
-        try {
-            document.getElementById('listaTransacoes').innerHTML = 
-                '<div class="mensagem-vazia">Carregando suas transações...</div>';
-
-            // Carregar transações do Supabase
-            const { data: transacoes, error } = await supabase
-                .from('transacoes')
-                .select('*')
-                .eq('user_id', this.user.id)
-                .order('data', { ascending: false });
-
-            console.log('Transações carregadas:', transacoes, 'Erro:', error);
-
-            if (error) throw error;
-
-            this.transacoes = transacoes || [];
-            console.log('Total de transações:', this.transacoes.length);
-
-            // Inicializar a aplicação
-            this.configurarEventosApp();
-            this.carregarCompetencias();
-            this.atualizarDashboard();
-            this.carregarFiltros();
-
-        } catch (error) {
-            console.error('Erro ao carregar dados:', error);
-            document.getElementById('listaTransacoes').innerHTML = 
-                '<div class="mensagem-vazia">Erro ao carregar transações: ' + error.message + '</div>';
-        }
-    }
-
-    configurarEventosApp() {
-        console.log('Configurando eventos do app...');
-        
-        // Botões principais
-        document.getElementById('btnNovaTransacao').addEventListener('click', () => {
-            this.abrirModalTransacao();
-        });
-
-        document.getElementById('btnVerDespesas').addEventListener('click', () => {
-            this.abrirModalDespesas();
-        });
-
-        document.getElementById('btnLimparFiltros').addEventListener('click', () => {
-            this.limparFiltros();
-        });
-
-        // Formulário
+    configurarEventos() {
         document.getElementById('transacaoForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.adicionarTransacao();
         });
 
-        // Filtros
-        document.getElementById('filtroCategoria').addEventListener('change', () => {
-            this.filtrarTransacoes();
-        });
-
-        document.getElementById('filtroTipo').addEventListener('change', () => {
-            this.filtrarTransacoes();
-        });
-
-        // Competência
         document.getElementById('competenciaAtual').addEventListener('change', (e) => {
             this.competenciaAtual = e.target.value;
             this.atualizarDashboard();
             this.carregarFiltros();
         });
 
-        // Tipo de transação
+        document.getElementById('filtroCategoria').addEventListener('change', () => this.filtrarTransacoes());
+        document.getElementById('filtroTipo').addEventListener('change', () => this.filtrarTransacoes());
+
         document.getElementById('tipo').addEventListener('change', (e) => {
             this.atualizarCategorias(e.target.value);
         });
 
-        // Modais
-        document.querySelectorAll('.close').forEach(closeBtn => {
-            closeBtn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal');
-                if (modal) {
-                    modal.style.display = 'none';
-                }
-            });
-        });
-
-        document.getElementById('btnCancelar').addEventListener('click', () => {
-            this.fecharModalTransacao();
+        document.getElementById('anoSelecionado').addEventListener('change', (e) => {
+            this.carregarVisaoAnual(e.target.value);
         });
 
         // Fechar modal ao clicar fora
         window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
-            }
+            const modals = ['modalTransacao', 'modalDespesas', 'modalVisaoAnual'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (e.target === modal) {
+                    this[`fecharModal${modalId.replace('modal', '')}`]();
+                }
+            });
         });
-
-        console.log('Eventos do app configurados');
     }
-
-    // ... (os outros métodos permanecem iguais - carregarCompetencias, atualizarDashboard, etc.)
 
     obterCompetenciaAtual() {
         const hoje = new Date();
@@ -333,17 +120,7 @@ class ControleGastosSupabase {
             select.appendChild(option);
         });
 
-        // Atualizar texto do mês atual
         this.atualizarTextoMesAtual();
-    }
-
-    atualizarTextoMesAtual() {
-        const [ano, mes] = this.competenciaAtual.split('-');
-        const data = new Date(ano, mes - 1);
-        const nomeMes = data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-        
-        document.getElementById('mesAtualTexto').textContent = nomeMes;
-        document.getElementById('mesDespesasTexto').textContent = nomeMes;
     }
 
     obterTodasCompetencias() {
@@ -357,11 +134,36 @@ class ControleGastosSupabase {
             }
         });
 
+        // Ordenar do mais recente para o mais antigo
         return Array.from(competencias).sort().reverse();
+    }
+
+    obterTodosAnos() {
+        const anos = new Set();
+        anos.add(this.anoAtual);
+        
+        this.transacoes.forEach(transacao => {
+            if (transacao.data) {
+                const ano = transacao.data.split('-')[0];
+                anos.add(parseInt(ano));
+            }
+        });
+
+        return Array.from(anos).sort((a, b) => b - a);
+    }
+
+    atualizarTextoMesAtual() {
+        const [ano, mes] = this.competenciaAtual.split('-');
+        const data = new Date(ano, mes - 1);
+        const nomeMes = data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        
+        document.getElementById('mesAtualTexto').textContent = nomeMes;
+        document.getElementById('mesDespesasTexto').textContent = nomeMes;
     }
 
     atualizarCategorias(tipo) {
         const categoriaSelect = document.getElementById('categoria');
+        const valorAtual = categoriaSelect.value;
         
         categoriaSelect.innerHTML = '<option value="">Selecione...</option>';
         
@@ -383,6 +185,10 @@ class ControleGastosSupabase {
                 <option value="outras-despesas">Outras Despesas</option>
             `;
         }
+        
+        if (valorAtual) {
+            categoriaSelect.value = valorAtual;
+        }
     }
 
     abrirModalTransacao() {
@@ -401,17 +207,150 @@ class ControleGastosSupabase {
         document.getElementById('modalDespesas').style.display = 'block';
     }
 
+    fecharModalDespesas() {
+        document.getElementById('modalDespesas').style.display = 'none';
+    }
+
+    abrirModalVisaoAnual() {
+        this.carregarModalVisaoAnual();
+        document.getElementById('modalVisaoAnual').style.display = 'block';
+    }
+
+    fecharModalVisaoAnual() {
+        document.getElementById('modalVisaoAnual').style.display = 'none';
+    }
+
+    carregarModalVisaoAnual() {
+        const anos = this.obterTodosAnos();
+        const selectAno = document.getElementById('anoSelecionado');
+        
+        selectAno.innerHTML = '';
+        anos.forEach(ano => {
+            const option = document.createElement('option');
+            option.value = ano;
+            option.textContent = ano;
+            if (ano === this.anoAtual) {
+                option.selected = true;
+            }
+            selectAno.appendChild(option);
+        });
+
+        document.getElementById('anoVisaoTexto').textContent = this.anoAtual;
+        this.carregarVisaoAnual(this.anoAtual);
+    }
+
+    carregarVisaoAnual(ano) {
+        this.carregarResumoAnual(ano);
+        this.carregarTabelaMensal(ano);
+        this.carregarGraficoCategorias(ano);
+    }
+
+    carregarResumoAnual(ano) {
+        const transacoesAno = this.transacoes.filter(t => t.data && t.data.startsWith(ano.toString()));
+        
+        const receitaAnual = transacoesAno
+            .filter(t => t.tipo === 'receita')
+            .reduce((sum, t) => sum + t.valor, 0);
+
+        const despesaAnual = transacoesAno
+            .filter(t => t.tipo === 'despesa')
+            .reduce((sum, t) => sum + t.valor, 0);
+
+        const saldoAnual = receitaAnual - despesaAnual;
+
+        document.getElementById('receitaAnual').textContent = this.formatarMoeda(receitaAnual);
+        document.getElementById('despesaAnual').textContent = this.formatarMoeda(despesaAnual);
+        document.getElementById('saldoAnualModal').textContent = this.formatarMoeda(saldoAnual);
+        document.getElementById('saldoAnualModal').className = 'valor ' + (saldoAnual >= 0 ? 'positivo' : 'negativo');
+    }
+
+    carregarTabelaMensal(ano) {
+        const meses = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+
+        const tbody = document.querySelector('#tabelaMensal tbody');
+        tbody.innerHTML = '';
+
+        meses.forEach((nomeMes, index) => {
+            const mesNum = String(index + 1).padStart(2, '0');
+            const competencia = `${ano}-${mesNum}`;
+            
+            const transacoesMes = this.transacoes.filter(t => 
+                t.data && t.data.startsWith(competencia)
+            );
+
+            const receitas = transacoesMes
+                .filter(t => t.tipo === 'receita')
+                .reduce((sum, t) => sum + t.valor, 0);
+
+            const despesas = transacoesMes
+                .filter(t => t.tipo === 'despesa')
+                .reduce((sum, t) => sum + t.valor, 0);
+
+            const saldo = receitas - despesas;
+            const status = saldo >= 0 ? 'positivo' : 'negativo';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${nomeMes}</strong></td>
+                <td>${this.formatarMoeda(receitas)}</td>
+                <td>${this.formatarMoeda(despesas)}</td>
+                <td class="saldo-${status}">${this.formatarMoeda(saldo)}</td>
+                <td><span class="status-${status}">${saldo >= 0 ? '✅ Positivo' : '❌ Negativo'}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    carregarGraficoCategorias(ano) {
+        const transacoesAno = this.transacoes.filter(t => 
+            t.data && t.data.startsWith(ano.toString()) && t.tipo === 'despesa'
+        );
+
+        const categoriasMap = {};
+        
+        transacoesAno.forEach(despesa => {
+            if (!categoriasMap[despesa.categoria]) {
+                categoriasMap[despesa.categoria] = 0;
+            }
+            categoriasMap[despesa.categoria] += despesa.valor;
+        });
+
+        const container = document.getElementById('graficoCategoriasAnual');
+        
+        if (Object.keys(categoriasMap).length === 0) {
+            container.innerHTML = '<div class="mensagem-vazia">Nenhuma despesa encontrada para este ano</div>';
+            return;
+        }
+
+        // Ordenar por valor (maior primeiro)
+        const categoriasOrdenadas = Object.entries(categoriasMap)
+            .sort(([,a], [,b]) => b - a);
+
+        const maiorValor = Math.max(...categoriasOrdenadas.map(([,valor]) => valor));
+
+        container.innerHTML = categoriasOrdenadas.map(([categoria, valor]) => {
+            const porcentagem = (valor / maiorValor) * 100;
+            return `
+                <div class="categoria-grafico-item">
+                    <div class="categoria-grafico-nome">${this.formatarCategoria(categoria)}</div>
+                    <div class="categoria-grafico-bar">
+                        <div class="categoria-grafico-fill" style="width: ${porcentagem}%"></div>
+                    </div>
+                    <div class="categoria-grafico-valor">${this.formatarMoeda(valor)}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
     carregarDataAtual() {
         const hoje = new Date().toISOString().split('T')[0];
         document.getElementById('data').value = hoje;
     }
 
-    async adicionarTransacao() {
-        if (!this.user) {
-            alert('Você precisa estar logado!');
-            return;
-        }
-
+    adicionarTransacao() {
         const descricao = document.getElementById('descricao').value;
         const valor = parseFloat(document.getElementById('valor').value);
         const categoria = document.getElementById('categoria').value;
@@ -420,17 +359,17 @@ class ControleGastosSupabase {
 
         // Validações
         if (!descricao || !valor || !categoria || !data || !tipo) {
-            alert('Por favor, preencha todos os campos!');
+            Notificacao.mostrar('Por favor, preencha todos os campos!', 'erro');
             return;
         }
 
         if (valor <= 0) {
-            alert('O valor deve ser maior que zero!');
+            Notificacao.mostrar('O valor deve ser maior que zero!', 'erro');
             return;
         }
 
         const transacao = {
-            user_id: this.user.id,
+            id: Date.now(),
             descricao: descricao,
             valor: valor,
             categoria: categoria,
@@ -438,73 +377,23 @@ class ControleGastosSupabase {
             tipo: tipo
         };
 
-        try {
-            // Salvar no Supabase
-            const { data: novaTransacao, error } = await supabase
-                .from('transacoes')
-                .insert([transacao])
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            // Adicionar localmente
-            this.transacoes.unshift(novaTransacao);
-            
-            this.atualizarDashboard();
-            this.carregarFiltros();
-            this.carregarCompetencias();
-            this.fecharModalTransacao();
-            
-            this.mostrarStatusSincronizacao('Transação salva!');
-            alert('Transação adicionada com sucesso!');
-            
-        } catch (error) {
-            console.error('Erro ao salvar transação:', error);
-            alert('Erro ao salvar transação: ' + error.message);
-        }
-    }
-
-    async excluirTransacao(id) {
-        if (!confirm('Tem certeza que deseja excluir esta transação?')) return;
-
-        try {
-            // Excluir do Supabase
-            const { error } = await supabase
-                .from('transacoes')
-                .delete()
-                .eq('id', id)
-                .eq('user_id', this.user.id);
-
-            if (error) throw error;
-
-            // Remover localmente
-            this.transacoes = this.transacoes.filter(t => t.id !== id);
-            
-            this.atualizarDashboard();
-            this.carregarFiltros();
-            this.carregarCompetencias();
-            
-            this.mostrarStatusSincronizacao('Transação excluída!');
-            
-        } catch (error) {
-            console.error('Erro ao excluir transação:', error);
-            alert('Erro ao excluir transação: ' + error.message);
-        }
-    }
-
-    mostrarStatusSincronizacao(mensagem, isError = false) {
-        const statusAnterior = document.querySelector('.sync-status');
-        if (statusAnterior) statusAnterior.remove();
-
-        const status = document.createElement('div');
-        status.className = `sync-status ${isError ? 'error' : ''}`;
-        status.textContent = mensagem;
-        status.style.background = isError ? '#e53935' : '#4caf50';
+        this.transacoes.push(transacao);
+        this.salvarTransacoes();
+        this.atualizarDashboard();
+        this.carregarFiltros();
+        this.carregarCompetencias();
+        this.fecharModalTransacao();
         
-        document.body.appendChild(status);
+        Notificacao.mostrar('Transação adicionada com sucesso!', 'sucesso');
+    }
 
-        setTimeout(() => status.remove(), 3000);
+    excluirTransacao(id) {
+        this.transacoes = this.transacoes.filter(t => t.id !== id);
+        this.salvarTransacoes();
+        this.atualizarDashboard();
+        this.carregarFiltros();
+        this.carregarCompetencias();
+        Notificacao.mostrar('Transação excluída com sucesso!', 'sucesso');
     }
 
     atualizarDashboard() {
@@ -513,11 +402,11 @@ class ControleGastosSupabase {
         
         const totalReceitas = transacoesFiltradas
             .filter(t => t.tipo === 'receita')
-            .reduce((sum, t) => sum + parseFloat(t.valor), 0);
+            .reduce((sum, t) => sum + t.valor, 0);
 
         const totalDespesas = transacoesFiltradas
             .filter(t => t.tipo === 'despesa')
-            .reduce((sum, t) => sum + parseFloat(t.valor), 0);
+            .reduce((sum, t) => sum + t.valor, 0);
 
         const saldoTotal = this.calcularSaldoTotal();
         const saldoMes = totalReceitas - totalDespesas;
@@ -527,6 +416,7 @@ class ControleGastosSupabase {
         document.getElementById('saldoTotal').textContent = this.formatarMoeda(saldoTotal);
         document.getElementById('saldoMes').textContent = this.formatarMoeda(saldoMes);
         
+        // Atualizar cor do saldo
         const saldoElement = document.getElementById('saldoMes');
         saldoElement.className = 'valor ' + (saldoMes >= 0 ? 'positivo' : 'negativo');
 
@@ -536,11 +426,11 @@ class ControleGastosSupabase {
     calcularSaldoTotal() {
         const receitasTotal = this.transacoes
             .filter(t => t.tipo === 'receita')
-            .reduce((sum, t) => sum + parseFloat(t.valor), 0);
+            .reduce((sum, t) => sum + t.valor, 0);
 
         const despesasTotal = this.transacoes
             .filter(t => t.tipo === 'despesa')
-            .reduce((sum, t) => sum + parseFloat(t.valor), 0);
+            .reduce((sum, t) => sum + t.valor, 0);
 
         return receitasTotal - despesasTotal;
     }
@@ -558,22 +448,24 @@ class ControleGastosSupabase {
         const lista = document.getElementById('listaTransacoes');
         
         if (transacoes.length === 0) {
-            lista.innerHTML = '<div class="mensagem-vazia">Nenhuma transação encontrada para este mês.</div>';
+            lista.innerHTML = '<div class="mensagem-vazia">Nenhuma transação encontrada para este mês. Clique em "Nova Transação" para começar!</div>';
             return;
         }
 
+        // Ordenar por data (mais recente primeiro)
         const transacoesOrdenadas = transacoes.sort((a, b) => new Date(b.data) - new Date(a.data));
 
         lista.innerHTML = transacoesOrdenadas.map(transacao => {
             const descricao = transacao.descricao || 'Sem descrição';
-            const valor = isNaN(transacao.valor) ? 0 : parseFloat(transacao.valor);
+            const valor = isNaN(transacao.valor) ? 0 : transacao.valor;
             const data = transacao.data ? this.formatarData(transacao.data) : 'Data inválida';
             const categoria = this.formatarCategoria(transacao.categoria);
+            const icone = transacao.tipo === 'receita' ? '📈' : '📉';
 
             return `
-                <div class="transacao-item" onclick="app.excluirTransacao(${transacao.id})">
+                <div class="transacao-item" onclick="controleGastos.excluirTransacao(${transacao.id})">
                     <div class="transacao-info">
-                        <div class="transacao-descricao">${descricao}</div>
+                        <div class="transacao-descricao">${icone} ${descricao}</div>
                         <div class="transacao-detalhes">
                             ${data} • ${categoria}
                         </div>
@@ -590,10 +482,12 @@ class ControleGastosSupabase {
         const transacoesMes = this.obterTransacoesDoMes();
         const despesas = transacoesMes.filter(t => t.tipo === 'despesa');
         
-        const totalDespesas = despesas.reduce((sum, t) => sum + parseFloat(t.valor), 0);
+        // Total de despesas
+        const totalDespesas = despesas.reduce((sum, t) => sum + t.valor, 0);
         document.getElementById('totalDespesasModal').textContent = this.formatarMoeda(totalDespesas);
         
-        const maiorDespesa = despesas.length > 0 ? Math.max(...despesas.map(t => parseFloat(t.valor))) : 0;
+        // Maior despesa
+        const maiorDespesa = despesas.length > 0 ? Math.max(...despesas.map(t => t.valor)) : 0;
         document.getElementById('maiorDespesa').textContent = this.formatarMoeda(maiorDespesa);
         
         // Média por dia
@@ -601,7 +495,10 @@ class ControleGastosSupabase {
         const mediaDia = totalDespesas / diasNoMes;
         document.getElementById('mediaDia').textContent = this.formatarMoeda(mediaDia);
         
+        // Despesas por categoria
         this.mostrarDespesasPorCategoria(despesas);
+        
+        // Lista de despesas detalhadas
         this.mostrarDespesasDetalhadas(despesas);
     }
 
@@ -612,7 +509,7 @@ class ControleGastosSupabase {
             if (!categoriasMap[despesa.categoria]) {
                 categoriasMap[despesa.categoria] = 0;
             }
-            categoriasMap[despesa.categoria] += parseFloat(despesa.valor);
+            categoriasMap[despesa.categoria] += despesa.valor;
         });
 
         const lista = document.getElementById('listaCategoriasDespesas');
@@ -626,8 +523,10 @@ class ControleGastosSupabase {
             .sort(([,a], [,b]) => b - a)
             .map(([categoria, valor]) => `
                 <div class="categoria-item">
-                    <div class="categoria-nome">${this.formatarCategoria(categoria)}</div>
-                    <div class="categoria-valor">${this.formatarMoeda(valor)}</div>
+                    <div class="categoria-info">
+                        <span class="categoria-nome">${this.formatarCategoria(categoria)}</span>
+                    </div>
+                    <span class="categoria-valor">${this.formatarMoeda(valor)}</span>
                 </div>
             `).join('');
     }
@@ -651,7 +550,7 @@ class ControleGastosSupabase {
                     </div>
                 </div>
                 <div class="transacao-valor despesa">
-                    - ${this.formatarMoeda(parseFloat(despesa.valor))}
+                    - ${this.formatarMoeda(despesa.valor)}
                 </div>
             </div>
         `).join('');
@@ -726,10 +625,58 @@ class ControleGastosSupabase {
         };
         return categorias[categoria] || categoria || 'Sem categoria';
     }
+
+    salvarTransacoes() {
+        localStorage.setItem('controleGastos', JSON.stringify(this.transacoes));
+    }
+
+    carregarTransacoes() {
+        try {
+            const dados = localStorage.getItem('controleGastos');
+            const transacoes = dados ? JSON.parse(dados) : [];
+            
+            // Validar e limpar transações corrompidas
+            return transacoes.filter(transacao => 
+                transacao && 
+                transacao.descricao && 
+                !isNaN(transacao.valor) && 
+                transacao.data
+            );
+        } catch (e) {
+            console.error('Erro ao carregar transações:', e);
+            return [];
+        }
+    }
+}
+
+// Funções globais para os botões do HTML
+function abrirModalTransacao() {
+    controleGastos.abrirModalTransacao();
+}
+
+function fecharModalTransacao() {
+    controleGastos.fecharModalTransacao();
+}
+
+function abrirModalDespesas() {
+    controleGastos.abrirModalDespesas();
+}
+
+function fecharModalDespesas() {
+    controleGastos.fecharModalDespesas();
+}
+
+function abrirModalVisaoAnual() {
+    controleGastos.abrirModalVisaoAnual();
+}
+
+function fecharModalVisaoAnual() {
+    controleGastos.fecharModalVisaoAnual();
+}
+
+function limparFiltros() {
+    controleGastos.limparFiltros();
 }
 
 // Inicializar a aplicação
-console.log('DOM carregado, inicializando app...');
-document.addEventListener('DOMContentLoaded', function() {
-    window.app = new ControleGastosSupabase();
-});
+const controleGastos = new ControleGastos();
