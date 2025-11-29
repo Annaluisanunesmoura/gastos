@@ -208,3 +208,6 @@ class ControleGastosSupabase {
 
         // Formulário
         document.getElementById('
+// Configuração do Supabase - SUBSTITUA COM SUAS CONFIGURAÇÕES
+const SUPABASE_URL = 'https://punthiypqvdopkqbluic.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bnRoaXlwcXZkb3BrcWJsdWljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNzk0NTEsImV4cCI6MjA3OTk1NTQ1MX0.bwlMwNZnolfaRMeWDi6uQ08sUBH1UyhoJbhkAz7oXpA';
