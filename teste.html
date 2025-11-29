@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Teste Supabase</h1>
+    <div id="status">Carregando...</div>
+    
+    <script>
+        // SUAS CONFIGURAÇÕES AQUI - COLE AS QUE VOCÊ PEGOU NO SUPABASE
+        const SUPABASE_URL = 'https://SEU_PROJETO.supabase.co';
+        const SUPABASE_KEY = 'SUA_CHAVE_ANON_PUBLICA';
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        async function testarConexao() {
+            const status = document.getElementById('status');
+            
+            try {
+                // Testar conexão básica
+                const { data, error } = await supabase.from('transacoes').select('count');
+                
+                if (error) {
+                    status.innerHTML = `❌ Erro: ${error.message}`;
+                    console.error('Erro detalhado:', error);
+                } else {
+                    status.innerHTML = '✅ Conexão com Supabase OK!';
+                }
+            } catch (err) {
+                status.innerHTML = `❌ Erro grave: ${err.message}`;
+                console.error('Erro catch:', err);
+            }
+        }
+        
+        testarConexao();
+    </script>
+</body>
+</html>
