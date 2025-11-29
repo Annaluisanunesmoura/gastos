@@ -5,87 +5,213 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Gastos Pessoais</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-wallet"></i> Controle de Gastos</h1>
-            <p>Gerencie suas despesas de forma simples</p>
+            <h1>💰 Controle de Gastos Anual</h1>
+            <div class="header-controls">
+                <div class="competencia-selector">
+                    <label for="competenciaAtual">Selecione o Mês:</label>
+                    <select id="competenciaAtual">
+                        <!-- Meses serão carregados via JavaScript -->
+                    </select>
+                </div>
+                <div class="saldo-total">
+                    <h2>Saldo Total: <span id="saldoTotal">R$ 0.00</span></h2>
+                </div>
+            </div>
         </header>
 
-        <div class="app-container">
-            <!-- Seção de Adicionar Gastos -->
-            <section class="add-expense">
-                <h2><i class="fas fa-plus-circle"></i> Nova Despesa</h2>
-                <form id="expense-form">
-                    <div class="form-group">
-                        <label for="category"><i class="fas fa-tag"></i> Categoria:</label>
-                        <input type="text" id="category" list="categories" required placeholder="Ex: Alimentação">
-                        <datalist id="categories"></datalist>
-                    </div>
-                    <div class="form-group">
-                        <label for="description"><i class="fas fa-align-left"></i> Descrição:</label>
-                        <input type="text" id="description" placeholder="Ex: Supermercado">
-                    </div>
-                    <div class="form-group">
-                        <label for="amount"><i class="fas fa-money-bill-wave"></i> Valor (R$):</label>
-                        <input type="number" id="amount" step="0.01" min="0" required placeholder="0,00">
-                    </div>
-                    <div class="form-group">
-                        <label for="date"><i class="fas fa-calendar-day"></i> Data:</label>
-                        <input type="date" id="date" required>
-                    </div>
-                    <button type="submit" class="btn">
-                        <i class="fas fa-save"></i> Salvar
-                    </button>
-                </form>
-            </section>
+        <div class="dashboard">
+            <div class="card">
+                <h3>📈 Receitas</h3>
+                <p class="valor positivo" id="totalReceitas">R$ 0.00</p>
+            </div>
+            <div class="card">
+                <h3>📉 Despesas</h3>
+                <p class="valor negativo" id="totalDespesas">R$ 0.00</p>
+            </div>
+            <div class="card">
+                <h3>🎯 Saldo do Mês</h3>
+                <p class="valor" id="saldoMes">R$ 0.00</p>
+            </div>
+            <div class="card">
+                <h3>📅 Ano Todo</h3>
+                <p class="valor" id="saldoAnual">R$ 0.00</p>
+            </div>
+        </div>
 
-            <!-- Seção de Resumo -->
-            <section class="expense-summary">
-                <h2><i class="fas fa-chart-pie"></i> Resumo</h2>
-                <div class="summary-cards">
-                    <div class="card">
-                        <h3>Total no Mês</h3>
-                        <p id="month-total">R$ 0,00</p>
-                    </div>
-                    <div class="card">
-                        <h3>Categoria Mais Gasta</h3>
-                        <p id="top-category">-</p>
-                    </div>
-                </div>
-                <div class="filter-controls">
-                    <div class="form-group">
-                        <label for="filter-month"><i class="fas fa-filter"></i> Mês:</label>
-                        <select id="filter-month"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="filter-category"><i class="fas fa-filter"></i> Categoria:</label>
-                        <select id="filter-category">
-                            <option value="all">Todas</option>
-                        </select>
-                    </div>
-                </div>
-            </section>
+        <div class="actions-bar">
+            <button onclick="abrirModalTransacao()" class="btn-primary">+ Nova Transação</button>
+            <button onclick="abrirModalDespesas()" class="btn-secondary">📊 Ver Despesas Detalhadas</button>
+            <button onclick="abrirModalVisaoAnual()" class="btn-tertiary">📈 Visão Anual</button>
+        </div>
 
-            <!-- Lista de Gastos -->
-            <section class="expense-list">
-                <h2><i class="fas fa-history"></i> Histórico</h2>
-                <div class="list-header">
-                    <span>Data</span>
-                    <span>Categoria</span>
-                    <span>Descrição</span>
-                    <span>Valor</span>
-                    <span>Ações</span>
+        <section class="form-section">
+            <h3>Transações de <span id="mesAtualTexto">Novembro 2025</span></h3>
+            <div class="filtros">
+                <div class="filtros-container">
+                    <select id="filtroCategoria">
+                        <option value="">Todas categorias</option>
+                    </select>
+                    <select id="filtroTipo">
+                        <option value="">Todos os tipos</option>
+                        <option value="receita">Receitas</option>
+                        <option value="despesa">Despesas</option>
+                    </select>
+                    <button onclick="limparFiltros()" class="btn-clear">🔄 Limpar Filtros</button>
                 </div>
-                <div id="expenses-container">
-                    <p class="empty-message">
-                        <i class="fas fa-info-circle"></i> Nenhuma despesa registrada.
-                    </p>
+            </div>
+            <div id="listaTransacoes" class="transacoes-lista">
+                <!-- Transações serão inseridas aqui via JavaScript -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal para Nova Transação -->
+    <div id="modalTransacao" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ Nova Transação</h3>
+                <span class="close" onclick="fecharModalTransacao()">&times;</span>
+            </div>
+            <form id="transacaoForm">
+                <div class="form-group">
+                    <label for="descricao">Descrição:</label>
+                    <input type="text" id="descricao" required placeholder="Ex: Salário, Aluguel, Mercado...">
                 </div>
-            </section>
+                
+                <div class="form-group">
+                    <label for="valor">Valor (R$):</label>
+                    <input type="number" id="valor" step="0.01" required placeholder="0.00" min="0.01">
+                </div>
+                
+                <div class="form-group">
+                    <label for="categoria">Categoria:</label>
+                    <select id="categoria" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="data">Data da Transação:</label>
+                    <input type="date" id="data" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tipo">Tipo:</label>
+                    <select id="tipo" required>
+                        <option value="receita">📈 Receita</option>
+                        <option value="despesa">📉 Despesa</option>
+                    </select>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" onclick="fecharModalTransacao()" class="btn-cancel">Cancelar</button>
+                    <button type="submit" class="btn-primary">💾 Salvar Transação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Visualizar Despesas -->
+    <div id="modalDespesas" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>📊 Despesas Detalhadas - <span id="mesDespesasTexto">Novembro 2025</span></h3>
+                <span class="close" onclick="fecharModalDespesas()">&times;</span>
+            </div>
+            <div class="despesas-content">
+                <div class="despesas-resumo">
+                    <div class="resumo-card">
+                        <h4>Total de Despesas</h4>
+                        <p class="valor negativo" id="totalDespesasModal">R$ 0.00</p>
+                    </div>
+                    <div class="resumo-card">
+                        <h4>Maior Despesa</h4>
+                        <p class="valor negativo" id="maiorDespesa">R$ 0.00</p>
+                    </div>
+                    <div class="resumo-card">
+                        <h4>Média por Dia</h4>
+                        <p class="valor" id="mediaDia">R$ 0.00</p>
+                    </div>
+                </div>
+                
+                <div class="despesas-por-categoria">
+                    <h4>Despesas por Categoria</h4>
+                    <div id="listaCategoriasDespesas">
+                        <!-- Categorias serão inseridas via JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="despesas-lista">
+                    <h4>Últimas Despesas</h4>
+                    <div id="listaDespesasDetalhadas">
+                        <!-- Despesas detalhadas serão inseridas via JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Visão Anual -->
+    <div id="modalVisaoAnual" class="modal">
+        <div class="modal-content xlarge">
+            <div class="modal-header">
+                <h3>📈 Visão Anual - <span id="anoVisaoTexto">2025</span></h3>
+                <span class="close" onclick="fecharModalVisaoAnual()">&times;</span>
+            </div>
+            <div class="visao-anual-content">
+                <div class="ano-selector">
+                    <label for="anoSelecionado">Selecionar Ano:</label>
+                    <select id="anoSelecionado">
+                        <!-- Anos serão carregados via JavaScript -->
+                    </select>
+                </div>
+                
+                <div class="resumo-anual">
+                    <div class="resumo-card">
+                        <h4>Receita Anual</h4>
+                        <p class="valor positivo" id="receitaAnual">R$ 0.00</p>
+                    </div>
+                    <div class="resumo-card">
+                        <h4>Despesa Anual</h4>
+                        <p class="valor negativo" id="despesaAnual">R$ 0.00</p>
+                    </div>
+                    <div class="resumo-card">
+                        <h4>Saldo Anual</h4>
+                        <p class="valor" id="saldoAnualModal">R$ 0.00</p>
+                    </div>
+                </div>
+                
+                <div class="tabela-mensal">
+                    <h4>Desempenho Mensal</h4>
+                    <div class="tabela-container">
+                        <table id="tabelaMensal">
+                            <thead>
+                                <tr>
+                                    <th>Mês</th>
+                                    <th>Receitas</th>
+                                    <th>Despesas</th>
+                                    <th>Saldo</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dados mensais serão inseridos via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="grafico-categorias">
+                    <h4>Despesas por Categoria (Anual)</h4>
+                    <div id="graficoCategoriasAnual">
+                        <!-- Gráfico será inserido via JavaScript -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
