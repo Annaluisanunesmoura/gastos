@@ -3,212 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Gastos Pessoais</title>
+    <title>Controle de Gastos - Supabase</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>💰 Controle de Gastos Anual</h1>
-            <div class="header-controls">
-                <div class="competencia-selector">
-                    <label for="competenciaAtual">Selecione o Mês:</label>
-                    <select id="competenciaAtual">
-                        <!-- Meses serão carregados via JavaScript -->
-                    </select>
-                </div>
-                <div class="saldo-total">
-                    <h2>Saldo Total: <span id="saldoTotal">R$ 0.00</span></h2>
-                </div>
+    <!-- Tela de Login -->
+    <div id="telaLogin" class="login-container">
+        <div class="login-box">
+            <h2>💰 Controle de Gastos</h2>
+            <p>Entre ou crie sua conta</p>
+            
+            <div class="login-form">
+                <input type="email" id="loginEmail" placeholder="Seu email" class="login-input">
+                <input type="password" id="loginSenha" placeholder="Sua senha" class="login-input">
+                <button id="btnEntrar" class="btn-primary">Entrar</button>
+                <button id="btnCriarConta" class="btn-secondary">Criar Conta</button>
             </div>
-        </header>
-
-        <div class="dashboard">
-            <div class="card">
-                <h3>📈 Receitas</h3>
-                <p class="valor positivo" id="totalReceitas">R$ 0.00</p>
-            </div>
-            <div class="card">
-                <h3>📉 Despesas</h3>
-                <p class="valor negativo" id="totalDespesas">R$ 0.00</p>
-            </div>
-            <div class="card">
-                <h3>🎯 Saldo do Mês</h3>
-                <p class="valor" id="saldoMes">R$ 0.00</p>
-            </div>
-            <div class="card">
-                <h3>📅 Ano Todo</h3>
-                <p class="valor" id="saldoAnual">R$ 0.00</p>
-            </div>
-        </div>
-
-        <div class="actions-bar">
-            <button onclick="abrirModalTransacao()" class="btn-primary">+ Nova Transação</button>
-            <button onclick="abrirModalDespesas()" class="btn-secondary">📊 Ver Despesas Detalhadas</button>
-            <button onclick="abrirModalVisaoAnual()" class="btn-tertiary">📈 Visão Anual</button>
-        </div>
-
-        <section class="form-section">
-            <h3>Transações de <span id="mesAtualTexto">Novembro 2025</span></h3>
-            <div class="filtros">
-                <div class="filtros-container">
-                    <select id="filtroCategoria">
-                        <option value="">Todas categorias</option>
-                    </select>
-                    <select id="filtroTipo">
-                        <option value="">Todos os tipos</option>
-                        <option value="receita">Receitas</option>
-                        <option value="despesa">Despesas</option>
-                    </select>
-                    <button onclick="limparFiltros()" class="btn-clear">🔄 Limpar Filtros</button>
-                </div>
-            </div>
-            <div id="listaTransacoes" class="transacoes-lista">
-                <!-- Transações serão inseridas aqui via JavaScript -->
-            </div>
-        </section>
-    </div>
-
-    <!-- Modal para Nova Transação -->
-    <div id="modalTransacao" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>➕ Nova Transação</h3>
-                <span class="close" onclick="fecharModalTransacao()">&times;</span>
-            </div>
-            <form id="transacaoForm">
-                <div class="form-group">
-                    <label for="descricao">Descrição:</label>
-                    <input type="text" id="descricao" required placeholder="Ex: Salário, Aluguel, Mercado...">
-                </div>
-                
-                <div class="form-group">
-                    <label for="valor">Valor (R$):</label>
-                    <input type="number" id="valor" step="0.01" required placeholder="0.00" min="0.01">
-                </div>
-                
-                <div class="form-group">
-                    <label for="categoria">Categoria:</label>
-                    <select id="categoria" required>
-                        <option value="">Selecione...</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="data">Data da Transação:</label>
-                    <input type="date" id="data" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="tipo">Tipo:</label>
-                    <select id="tipo" required>
-                        <option value="receita">📈 Receita</option>
-                        <option value="despesa">📉 Despesa</option>
-                    </select>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" onclick="fecharModalTransacao()" class="btn-cancel">Cancelar</button>
-                    <button type="submit" class="btn-primary">💾 Salvar Transação</button>
-                </div>
-            </form>
+            
+            <div class="login-message" id="loginMessage"></div>
         </div>
     </div>
 
-    <!-- Modal para Visualizar Despesas -->
-    <div id="modalDespesas" class="modal">
-        <div class="modal-content large">
-            <div class="modal-header">
-                <h3>📊 Despesas Detalhadas - <span id="mesDespesasTexto">Novembro 2025</span></h3>
-                <span class="close" onclick="fecharModalDespesas()">&times;</span>
+    <!-- Aplicação Principal -->
+    <div id="appPrincipal" style="display: none;">
+        <div class="container">
+            <header>
+                <div class="user-info">
+                    <span id="userEmail">usuário@email.com</span>
+                    <button id="btnSair" class="btn-sair">Sair</button>
+                </div>
+                <h1>💰 Controle de Gastos</h1>
+                <div class="header-controls">
+                    <div class="competencia-selector">
+                        <label for="competenciaAtual">Mês:</label>
+                        <select id="competenciaAtual"></select>
+                    </div>
+                    <div class="saldo-total">
+                        <h2>Saldo: <span id="saldoTotal">R$ 0.00</span></h2>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard">
+                <div class="card">
+                    <h3>📈 Receitas</h3>
+                    <p class="valor positivo" id="totalReceitas">R$ 0.00</p>
+                </div>
+                <div class="card">
+                    <h3>📉 Despesas</h3>
+                    <p class="valor negativo" id="totalDespesas">R$ 0.00</p>
+                </div>
+                <div class="card">
+                    <h3>🎯 Saldo Mês</h3>
+                    <p class="valor" id="saldoMes">R$ 0.00</p>
+                </div>
             </div>
-            <div class="despesas-content">
-                <div class="despesas-resumo">
-                    <div class="resumo-card">
-                        <h4>Total de Despesas</h4>
-                        <p class="valor negativo" id="totalDespesasModal">R$ 0.00</p>
-                    </div>
-                    <div class="resumo-card">
-                        <h4>Maior Despesa</h4>
-                        <p class="valor negativo" id="maiorDespesa">R$ 0.00</p>
-                    </div>
-                    <div class="resumo-card">
-                        <h4>Média por Dia</h4>
-                        <p class="valor" id="mediaDia">R$ 0.00</p>
-                    </div>
-                </div>
-                
-                <div class="despesas-por-categoria">
-                    <h4>Despesas por Categoria</h4>
-                    <div id="listaCategoriasDespesas">
-                        <!-- Categorias serão inseridas via JavaScript -->
-                    </div>
-                </div>
-                
-                <div class="despesas-lista">
-                    <h4>Últimas Despesas</h4>
-                    <div id="listaDespesasDetalhadas">
-                        <!-- Despesas detalhadas serão inseridas via JavaScript -->
+
+            <div class="actions-bar">
+                <button id="btnNovaTransacao" class="btn-primary">+ Nova Transação</button>
+                <button id="btnVerDespesas" class="btn-secondary">📊 Ver Despesas</button>
+            </div>
+
+            <section class="transacoes-section">
+                <h3>Transações de <span id="mesAtualTexto"></span></h3>
+                <div class="filtros">
+                    <div class="filtros-container">
+                        <select id="filtroCategoria">
+                            <option value="">Todas categorias</option>
+                        </select>
+                        <select id="filtroTipo">
+                            <option value="">Todos os tipos</option>
+                            <option value="receita">Receitas</option>
+                            <option value="despesa">Despesas</option>
+                        </select>
+                        <button id="btnLimparFiltros" class="btn-clear">🔄 Limpar</button>
                     </div>
                 </div>
+                <div id="listaTransacoes" class="transacoes-lista">
+                    <div class="mensagem-vazia">Carregando transações...</div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Modal Nova Transação -->
+        <div id="modalTransacao" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>➕ Nova Transação</h3>
+                    <span class="close">&times;</span>
+                </div>
+                <form id="transacaoForm">
+                    <div class="form-group">
+                        <label for="descricao">Descrição:</label>
+                        <input type="text" id="descricao" required placeholder="Ex: Salário, Aluguel...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="valor">Valor (R$):</label>
+                        <input type="number" id="valor" step="0.01" required placeholder="0.00" min="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoria">Categoria:</label>
+                        <select id="categoria" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="data">Data:</label>
+                        <input type="date" id="data" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo">Tipo:</label>
+                        <select id="tipo" required>
+                            <option value="receita">📈 Receita</option>
+                            <option value="despesa">📉 Despesa</option>
+                        </select>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" id="btnCancelar" class="btn-cancel">Cancelar</button>
+                        <button type="submit" class="btn-primary">💾 Salvar</button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
 
-    <!-- Modal para Visão Anual -->
-    <div id="modalVisaoAnual" class="modal">
-        <div class="modal-content xlarge">
-            <div class="modal-header">
-                <h3>📈 Visão Anual - <span id="anoVisaoTexto">2025</span></h3>
-                <span class="close" onclick="fecharModalVisaoAnual()">&times;</span>
-            </div>
-            <div class="visao-anual-content">
-                <div class="ano-selector">
-                    <label for="anoSelecionado">Selecionar Ano:</label>
-                    <select id="anoSelecionado">
-                        <!-- Anos serão carregados via JavaScript -->
-                    </select>
+        <!-- Modal Despesas -->
+        <div id="modalDespesas" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3>📊 Despesas Detalhadas - <span id="mesDespesasTexto"></span></h3>
+                    <span class="close">&times;</span>
                 </div>
-                
-                <div class="resumo-anual">
-                    <div class="resumo-card">
-                        <h4>Receita Anual</h4>
-                        <p class="valor positivo" id="receitaAnual">R$ 0.00</p>
+                <div class="despesas-content">
+                    <div class="despesas-resumo">
+                        <div class="resumo-card">
+                            <h4>Total Despesas</h4>
+                            <p class="valor negativo" id="totalDespesasModal">R$ 0.00</p>
+                        </div>
+                        <div class="resumo-card">
+                            <h4>Maior Despesa</h4>
+                            <p class="valor negativo" id="maiorDespesa">R$ 0.00</p>
+                        </div>
+                        <div class="resumo-card">
+                            <h4>Média por Dia</h4>
+                            <p class="valor" id="mediaDia">R$ 0.00</p>
+                        </div>
                     </div>
-                    <div class="resumo-card">
-                        <h4>Despesa Anual</h4>
-                        <p class="valor negativo" id="despesaAnual">R$ 0.00</p>
+                    
+                    <div class="despesas-por-categoria">
+                        <h4>Despesas por Categoria</h4>
+                        <div id="listaCategoriasDespesas"></div>
                     </div>
-                    <div class="resumo-card">
-                        <h4>Saldo Anual</h4>
-                        <p class="valor" id="saldoAnualModal">R$ 0.00</p>
-                    </div>
-                </div>
-                
-                <div class="tabela-mensal">
-                    <h4>Desempenho Mensal</h4>
-                    <div class="tabela-container">
-                        <table id="tabelaMensal">
-                            <thead>
-                                <tr>
-                                    <th>Mês</th>
-                                    <th>Receitas</th>
-                                    <th>Despesas</th>
-                                    <th>Saldo</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Dados mensais serão inseridos via JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="grafico-categorias">
-                    <h4>Despesas por Categoria (Anual)</h4>
-                    <div id="graficoCategoriasAnual">
-                        <!-- Gráfico será inserido via JavaScript -->
+                    
+                    <div class="despesas-lista">
+                        <h4>Últimas Despesas</h4>
+                        <div id="listaDespesasDetalhadas"></div>
                     </div>
                 </div>
             </div>
